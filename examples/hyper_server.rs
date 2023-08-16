@@ -21,6 +21,8 @@
 //
 // You'll see any messages you send echoed back.
 
+use std::{net::{SocketAddrV4, SocketAddr}, str::FromStr};
+
 use futures::io::{BufReader, BufWriter};
 use hyper::{Body, Request, Response};
 use soketto::{
@@ -34,11 +36,11 @@ use tokio_util::compat::TokioAsyncReadCompatExt;
 async fn main() -> Result<(), BoxedError> {
 	env_logger::init();
 
-	let addr = ([127, 0, 0, 1], 3000).into();
+	let addr = std::env::args().nth(1).unwrap_or_else(|| "127.0.0.1:3000".to_owned());
 
 	let service =
 		hyper::service::make_service_fn(|_| async { Ok::<_, hyper::Error>(hyper::service::service_fn(handler)) });
-	let server = hyper::Server::bind(&addr).serve(service);
+	let server = hyper::Server::bind(&SocketAddr::V4(SocketAddrV4::from_str(&addr).unwrap())).serve(service);
 
 	println!("Listening on http://{} — connect and I'll echo back anything you send!", server.local_addr());
 	server.await?;
